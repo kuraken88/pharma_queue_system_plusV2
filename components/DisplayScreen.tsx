@@ -68,9 +68,10 @@ const DisplayScreen: React.FC = () => {
       <div className="w-full h-full grid grid-cols-10">
         {/* Left: 70% - Main current number */}
         <div className="col-span-7 relative flex items-center justify-center">
-          {/* Header Label */}
-          <div className="absolute top-8 md:top-12 text-gray-500 text-2xl md:text-4xl font-bold tracking-widest">
-            ただいまの番号
+          {/* Header Labels */}
+          <div className="absolute top-6 md:top-10 text-gray-500 font-bold tracking-widest text-center leading-snug">
+            <div className="text-2xl md:text-4xl">お薬ができています</div>
+            <div className="text-xl md:text-3xl mt-1">ただいまの番号</div>
           </div>
 
           {/* Main Number Display */}
