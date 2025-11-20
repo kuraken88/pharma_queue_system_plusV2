@@ -5,7 +5,7 @@ import { playChime } from '../utils/sound';
 import { Volume2, Maximize } from 'lucide-react';
 
 const DisplayScreen: React.FC = () => {
-  const { currentNumber, blinkingNumberId, soundEnabled } = useQueue();
+  const { currentNumber, blinkingNumberId, soundEnabled, queue } = useQueue();
   const prevNumberIdRef = useRef<string | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
 
@@ -60,34 +60,76 @@ const DisplayScreen: React.FC = () => {
   // If blink is active for the current number
   const isBlinking = currentNumber && blinkingNumberId === currentNumber.id;
 
-  return (
-    <div className="w-screen h-screen bg-white flex flex-col items-center justify-center overflow-hidden cursor-none select-none">
-      {/* Header Label */}
-      <div className="absolute top-8 md:top-12 text-gray-500 text-2xl md:text-4xl font-bold tracking-widest">
-        ただいまの番号
-      </div>
+  // Sort queue newest to oldest
+  const sortedQueue = [...queue].sort((a, b) => b.timestamp - a.timestamp);
 
-      {/* Main Number Display */}
-      <div className="flex-1 flex items-center justify-center w-full">
-        {currentNumber ? (
-          <div 
-            className={`
-              font-black tracking-tighter leading-none
-              transition-all duration-300
-              ${isBlinking ? 'animate-urgent-blink' : 'text-gray-900'}
-            `}
-            style={{ 
-              fontSize: 'min(42vw, 650px)', 
-              fontVariantNumeric: 'tabular-nums' 
-            }}
-          >
-            {currentNumber.number}
+  return (
+    <div className="w-screen h-screen bg-white overflow-hidden cursor-none select-none">
+      <div className="w-full h-full grid grid-cols-10">
+        {/* Left: 70% - Main current number */}
+        <div className="col-span-7 relative flex items-center justify-center">
+          {/* Header Label */}
+          <div className="absolute top-8 md:top-12 text-gray-500 text-2xl md:text-4xl font-bold tracking-widest">
+            ただいまの番号
           </div>
-        ) : (
-          <div className="text-gray-300 text-4xl md:text-6xl font-bold tracking-widest opacity-50">
-            お待ちください
+
+          {/* Main Number Display */}
+          <div className="flex items-center justify-center w-full h-full">
+            {currentNumber ? (
+              <div 
+                className={`
+                  font-black tracking-tighter leading-none
+                  transition-all duration-300
+                  ${isBlinking ? 'animate-urgent-blink' : 'text-gray-900'}
+                `}
+                style={{ 
+                  fontSize: 'min(42vw, 650px)', 
+                  fontVariantNumeric: 'tabular-nums' 
+                }}
+              >
+                {currentNumber.number}
+              </div>
+            ) : (
+              <div className="text-gray-300 text-4xl md:text-6xl font-bold tracking-widest opacity-50">
+                お待ちください
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
+        {/* Right: 30% - 待ち行列一覧 */}
+        <div className="col-span-3 border-l border-gray-200 bg-gray-50 h-full flex flex-col">
+          <div className="px-6 py-5 border-b border-gray-200">
+            <h2 className="text-gray-600 text-2xl md:text-3xl font-bold tracking-widest">
+              待ち行列一覧
+            </h2>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            {sortedQueue.length === 0 && (
+              <div className="text-gray-300 text-xl md:text-2xl text-center mt-8">
+                なし
+              </div>
+            )}
+            {sortedQueue.map(item => (
+              <div
+                key={item.id}
+                className={`
+                  w-full bg-white border border-gray-200 rounded-xl
+                  px-4 py-3 md:px-5 md:py-4
+                  shadow-sm
+                  ${currentNumber && item.id === currentNumber.id ? 'ring-2 ring-red-400' : ''}
+                `}
+              >
+                <div
+                  className="font-extrabold text-gray-900 tracking-tight"
+                  style={{ fontVariantNumeric: 'tabular-nums', fontSize: 'min(6vw, 64px)' }}
+                >
+                  {item.number}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
