@@ -1,0 +1,5 @@
+{
+  "name": "Pharmacy Queue System (Japanese)",
+  "description": "A real-time pharmacy numbering and queue management system with dual interfaces for administration and public display, featuring Japanese UI, audio chimes, and blinking alerts.",
+  "requestFramePermissions": []
+}
