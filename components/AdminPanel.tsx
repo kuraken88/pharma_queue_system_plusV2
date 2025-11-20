@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQueue } from '../context/QueueContext';
-import { QueueItem } from '../types';
+import { QueueItem, Gender, AgeRange } from '../types';
 import { 
   Megaphone, 
   BellRing, 
@@ -39,6 +39,23 @@ const AdminPanel: React.FC = () => {
   const [newComment, setNewComment] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [selectedGender, setSelectedGender] = useState<Gender | null>(null);
+  const [selectedAgeRange, setSelectedAgeRange] = useState<AgeRange | null>(null);
+
+  const genders: Gender[] = ['男性', '女性'];
+  const ageRanges: AgeRange[] = ['００代','１０代','２０代','３０代','４０代','５０代','６０代','７０代','８０代','９０代'];
+
+  const pad2 = (n: number) => n.toString().padStart(2, '0');
+  const formatDateTime = (ms: number) => {
+    const d = new Date(ms);
+    const y = d.getFullYear();
+    const m = pad2(d.getMonth() + 1);
+    const day = pad2(d.getDate());
+    const hh = pad2(d.getHours());
+    const mm = pad2(d.getMinutes());
+    const ss = pad2(d.getSeconds());
+    return `${y}/${m}/${day} ${hh}:${mm}:${ss}`;
+  };
 
   // Auto-increment suggestion helper
   const getNextNumber = () => {
@@ -52,9 +69,12 @@ const AdminPanel: React.FC = () => {
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNumber.trim()) return;
-    addNumber(newNumber, newComment);
+    if (!selectedGender || !selectedAgeRange) return;
+    addNumber(newNumber, newComment, selectedGender, selectedAgeRange);
     setNewNumber('');
     setNewComment('');
+    setSelectedGender(null);
+    setSelectedAgeRange(null);
   };
 
   const handleAutoFill = () => {
@@ -213,6 +233,44 @@ const AdminPanel: React.FC = () => {
                   </div>
                 </div>
                 <div>
+                  <label className="block text-sm font-bold text-gray-600 mb-2">性別選択（必須）</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {genders.map(g => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setSelectedGender(g)}
+                        className={`px-4 py-2 rounded-lg font-medium border transition-colors ${
+                          selectedGender === g
+                            ? 'bg-blue-600 text-white border-blue-700'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-600 mb-2">年代選択（必須）</label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {ageRanges.map(a => (
+                      <button
+                        key={a}
+                        type="button"
+                        onClick={() => setSelectedAgeRange(a)}
+                        className={`px-3 py-2 rounded-lg font-medium border text-sm transition-colors ${
+                          selectedAgeRange === a
+                            ? 'bg-indigo-600 text-white border-indigo-700'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {a}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
                   <label className="block text-sm font-bold text-gray-600 mb-1">コメント（患者メモ）</label>
                   <input 
                     type="text" 
@@ -224,7 +282,7 @@ const AdminPanel: React.FC = () => {
                 </div>
                 <button 
                   type="submit" 
-                  disabled={!newNumber}
+                  disabled={!newNumber || !selectedGender || !selectedAgeRange}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-bold py-3 rounded-lg transition-colors shadow-sm flex justify-center items-center gap-2"
                 >
                   <Plus size={18} />
@@ -295,7 +353,9 @@ const AdminPanel: React.FC = () => {
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
-                              <span className="text-gray-600 font-medium">{item.comment || <span className="text-gray-300 italic text-sm">なし</span>}</span>
+                              <span className="text-gray-600 font-medium">
+                                {`${formatDateTime(item.timestamp)} ${item.gender ?? '---'} - ${item.ageRange ?? '---'} - ${item.comment || 'なし'}`}
+                              </span>
                               <button 
                                 onClick={() => startEditing(item)} 
                                 className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 p-1 hover:bg-blue-50 rounded transition-all"

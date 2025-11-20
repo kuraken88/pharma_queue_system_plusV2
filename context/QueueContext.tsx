@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { QueueItem, QueueContextType, QueueState } from '../types';
+import { QueueItem, QueueContextType, QueueState, Gender, AgeRange } from '../types';
 import { playChime } from '../utils/sound';
 
 const QueueContext = createContext<QueueContextType | undefined>(undefined);
@@ -39,7 +39,7 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  const addNumber = useCallback((number: string, comment: string) => {
+  const addNumber = useCallback((number: string, comment: string, gender: Gender, ageRange: AgeRange) => {
     setState(prev => ({
       ...prev,
       queue: [
@@ -50,6 +50,8 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           comment,
           status: 'waiting',
           timestamp: Date.now(),
+          gender,
+          ageRange,
         }
       ]
     }));
