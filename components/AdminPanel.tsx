@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQueue } from '../context/QueueContext';
 import { QueueItem, Gender, AgeRange } from '../types';
 import { 
@@ -45,6 +45,37 @@ const AdminPanel: React.FC = () => {
   const genders: Gender[] = ['男性', '女性'];
   const ageRanges: AgeRange[] = ['００代','１０代','２０代','３０代','４０代','５０代','６０代','７０代','８０代','９０代'];
 
+  // Google Sheets integration settings
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [sheetId, setSheetId] = useState('');
+  const [sheetName, setSheetName] = useState('');
+  const [secretToken, setSecretToken] = useState('');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('pharmacy_google_settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setWebhookUrl(parsed.webhookUrl || '');
+        setSheetId(parsed.sheetId || '');
+        setSheetName(parsed.sheetName || '');
+        setSecretToken(parsed.token || '');
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
+
+  const saveIntegrationSettings = () => {
+    const payload = {
+      webhookUrl,
+      sheetId,
+      sheetName,
+      token: secretToken,
+    };
+    localStorage.setItem('pharmacy_google_settings', JSON.stringify(payload));
+  };
+
   const pad2 = (n: number) => n.toString().padStart(2, '0');
   const formatDateTime = (ms: number) => {
     const d = new Date(ms);
@@ -70,11 +101,43 @@ const AdminPanel: React.FC = () => {
     e.preventDefault();
     if (!newNumber.trim()) return;
     if (!selectedGender || !selectedAgeRange) return;
-    addNumber(newNumber, newComment, selectedGender, selectedAgeRange);
+    // Prepare payload before mutating local state
+    const payloadNumber = newNumber.trim();
+    const payloadComment = newComment.trim();
+    const payloadGender = selectedGender;
+    const payloadAgeRange = selectedAgeRange;
+    const payloadTimestamp = formatDateTime(Date.now());
+
+    addNumber(payloadNumber, payloadComment, payloadGender, payloadAgeRange);
     setNewNumber('');
     setNewComment('');
     setSelectedGender(null);
     setSelectedAgeRange(null);
+
+    // Fire-and-forget webhook call (optional)
+    if (webhookUrl && sheetId) {
+      try {
+        const body = {
+          token: secretToken || undefined,
+          sheetId,
+          sheetName: sheetName || undefined,
+          number: payloadNumber,
+          timestamp: payloadTimestamp,
+          gender: payloadGender,
+          ageRange: payloadAgeRange,
+          comment: payloadComment,
+        };
+        // Do not await; avoid blocking UI
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          // mode: 'no-cors' // uncomment if your Apps Script doesn't set CORS; response will be opaque
+        }).catch(() => {});
+      } catch {
+        // ignore network errors
+      }
+    }
   };
 
   const handleAutoFill = () => {
@@ -289,6 +352,65 @@ const AdminPanel: React.FC = () => {
                   追加する
                 </button>
               </form>
+            </div>
+
+            {/* Integration Settings */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h2 className="text-lg font-bold mb-4 text-gray-700">連携設定（Google スプレッドシート）</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-bold text-gray-600 mb-1">Webhook URL（Apps Script）</label>
+                  <input
+                    type="url"
+                    value={webhookUrl}
+                    onChange={(e) => setWebhookUrl(e.target.value)}
+                    placeholder="https://script.google.com/macros/s/xxx/exec"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-600 mb-1">Spreadsheet ID</label>
+                  <input
+                    type="text"
+                    value={sheetId}
+                    onChange={(e) => setSheetId(e.target.value)}
+                    placeholder="1mWXZXVS432ok_LwnwS7hit-gy7vV6L8osHi5w1BuMDU"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-600 mb-1">シート名（任意）</label>
+                  <input
+                    type="text"
+                    value={sheetName}
+                    onChange={(e) => setSheetName(e.target.value)}
+                    placeholder="シート1 など"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-600 mb-1">トークン（任意・セキュリティ用）</label>
+                  <input
+                    type="text"
+                    value={secretToken}
+                    onChange={(e) => setSecretToken(e.target.value)}
+                    placeholder="共有シークレット"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={saveIntegrationSettings}
+                    className="bg-gray-800 hover:bg-black text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    設定を保存
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400">
+                  追加時に A:番号 / B:日時 / C:性別 / D:年代 / E:コメント の順で追記します。
+                </p>
+              </div>
             </div>
 
           </div>
