@@ -100,13 +100,13 @@ const DisplayScreen: React.FC = () => {
 
         {/* Right: 30% - 待ち行列一覧 */}
         <div className="col-span-3 border-l border-gray-200 bg-gray-50 h-full flex flex-col">
-          <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between">
+          <div className="px-6 py-5 border-b border-gray-200">
             <h2 className="text-gray-600 text-2xl md:text-3xl font-bold tracking-widest leading-snug">
               以下の番号の方は、もうしばらくお待ちください
             </h2>
-            <span className="text-xs md:text-sm text-gray-500 whitespace-nowrap">
+            <div className="mt-1 text-xs md:text-sm text-gray-500">
               ※ 緑色の番号は呼び出し済みです
-            </span>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
             {sortedQueue.length === 0 && (
