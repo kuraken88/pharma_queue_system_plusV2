@@ -55,16 +55,23 @@ const AdminPanel: React.FC = () => {
   const [isLocked, setIsLocked] = useState(true);
   const [passcodeInput, setPasscodeInput] = useState('');
   const [passcodeError, setPasscodeError] = useState(false);
+  const DEFAULT_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxmeqvfnJRUHjYPUgawXYGkqJEKY2ghErigt4avpd7mNEwQia0stPRVfgKVXCFiEXSw0w/exec';
+  const DEFAULT_SHEET_ID = '1mWXZXVS432ok_LwnwS7hit-gy7vV6L8osHi5w1BuMDU';
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('pharmacy_google_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        setWebhookUrl(parsed.webhookUrl || '');
-        setSheetId(parsed.sheetId || '');
+        setWebhookUrl(parsed.webhookUrl || DEFAULT_WEBHOOK_URL);
+        setSheetId(parsed.sheetId || DEFAULT_SHEET_ID);
         setSheetName(parsed.sheetName || '');
         setSecretToken(parsed.token || '');
+      }
+      if (!saved) {
+        // Populate sensible defaults on fresh devices
+        setWebhookUrl(DEFAULT_WEBHOOK_URL);
+        setSheetId(DEFAULT_SHEET_ID);
       }
     } catch {
       // ignore parse errors
