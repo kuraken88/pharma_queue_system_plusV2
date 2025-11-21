@@ -122,7 +122,7 @@ const DisplayScreen: React.FC = () => {
                 `}
               >
                 <div
-                  className="font-extrabold text-gray-900 tracking-tight"
+                  className={`font-extrabold tracking-tight ${item.status === 'called' ? 'text-green-600' : 'text-gray-900'}`}
                   style={{ fontVariantNumeric: 'tabular-nums', fontSize: 'min(6vw, 64px)' }}
                 >
                   {item.number}
