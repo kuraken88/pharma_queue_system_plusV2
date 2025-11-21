@@ -51,6 +51,10 @@ const AdminPanel: React.FC = () => {
   const [sheetName, setSheetName] = useState('');
   const [secretToken, setSecretToken] = useState('');
   const [settingsSaved, setSettingsSaved] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const PASSCODE = '2025';
+  const [isLocked, setIsLocked] = useState(true);
+  const [passcodeInput, setPasscodeInput] = useState('');
+  const [passcodeError, setPasscodeError] = useState(false);
 
   useEffect(() => {
     try {
@@ -82,6 +86,22 @@ const AdminPanel: React.FC = () => {
     } catch {
       setSettingsSaved('error');
       setTimeout(() => setSettingsSaved('idle'), 2500);
+    }
+  };
+
+  const handleToggleLock = () => {
+    if (isLocked) {
+      if (passcodeInput === PASSCODE) {
+        setIsLocked(false);
+        setPasscodeError(false);
+      } else {
+        setPasscodeError(true);
+        setTimeout(() => setPasscodeError(false), 1500);
+      }
+    } else {
+      setIsLocked(true);
+      setPasscodeInput('');
+      setPasscodeError(false);
     }
   };
 
@@ -383,7 +403,8 @@ const AdminPanel: React.FC = () => {
                     value={webhookUrl}
                     onChange={(e) => setWebhookUrl(e.target.value)}
                     placeholder="https://script.google.com/macros/s/xxx/exec"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    disabled={isLocked}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:text-gray-500"
                   />
                 </div>
                 <div>
@@ -393,7 +414,8 @@ const AdminPanel: React.FC = () => {
                     value={sheetId}
                     onChange={(e) => setSheetId(e.target.value)}
                     placeholder="1mWXZXVS432ok_LwnwS7hit-gy7vV6L8osHi5w1BuMDU"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    disabled={isLocked}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:text-gray-500"
                   />
                 </div>
                 <div>
@@ -416,7 +438,31 @@ const AdminPanel: React.FC = () => {
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      pattern="\\d{4}"
+                      maxLength={4}
+                      value={passcodeInput}
+                      onChange={(e) => setPasscodeInput(e.target.value.replace(/\\D/g, '').slice(0, 4))}
+                      placeholder="4桁コード"
+                      className="w-28 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleToggleLock}
+                      className={`px-3 py-2 rounded-lg font-medium transition-colors ${
+                        isLocked ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : 'bg-green-600 text-white hover:bg-green-700'
+                      }`}
+                    >
+                      {isLocked ? 'ロック解除' : 'ロック'}
+                    </button>
+                    <span className={`text-xs ${isLocked ? 'text-gray-500' : 'text-green-600'}`}>
+                      {isLocked ? '編集ロック中' : '編集可能'}
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={saveIntegrationSettings}
@@ -425,6 +471,9 @@ const AdminPanel: React.FC = () => {
                     設定を保存
                   </button>
                 </div>
+                {passcodeError && (
+                  <div className="text-red-600 text-sm">コードが正しくありません</div>
+                )}
                 {settingsSaved === 'saved' && (
                   <div className="text-green-600 text-sm">保存しました</div>
                 )}
