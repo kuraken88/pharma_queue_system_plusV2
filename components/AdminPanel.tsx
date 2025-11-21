@@ -459,7 +459,7 @@ const AdminPanel: React.FC = () => {
               )}
             </div>
             
-            <div className="flex-1 overflow-auto max-h-[600px]">
+            <div className="flex-1 overflow-auto max-h-[75vh]">
               {queue.length === 0 ? (
                 <div className="p-12 text-center flex flex-col items-center text-gray-400">
                   <div className="bg-gray-50 p-4 rounded-full mb-3">
