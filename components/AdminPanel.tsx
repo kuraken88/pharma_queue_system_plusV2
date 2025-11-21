@@ -50,6 +50,7 @@ const AdminPanel: React.FC = () => {
   const [sheetId, setSheetId] = useState('');
   const [sheetName, setSheetName] = useState('');
   const [secretToken, setSecretToken] = useState('');
+  const [settingsSaved, setSettingsSaved] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
     try {
@@ -67,14 +68,31 @@ const AdminPanel: React.FC = () => {
   }, []);
 
   const saveIntegrationSettings = () => {
-    const payload = {
-      webhookUrl,
-      sheetId,
-      sheetName,
-      token: secretToken,
-    };
-    localStorage.setItem('pharmacy_google_settings', JSON.stringify(payload));
+    try {
+      setSettingsSaved('saving');
+      const payload = {
+        webhookUrl,
+        sheetId,
+        sheetName,
+        token: secretToken,
+      };
+      localStorage.setItem('pharmacy_google_settings', JSON.stringify(payload));
+      setSettingsSaved('saved');
+      setTimeout(() => setSettingsSaved('idle'), 1500);
+    } catch {
+      setSettingsSaved('error');
+      setTimeout(() => setSettingsSaved('idle'), 2500);
+    }
   };
+
+  // Autosave settings (debounced)
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      saveIntegrationSettings();
+    }, 400);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [webhookUrl, sheetId, sheetName, secretToken]);
 
   const pad2 = (n: number) => n.toString().padStart(2, '0');
   const formatDateTime = (ms: number) => {
@@ -132,7 +150,7 @@ const AdminPanel: React.FC = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
-          // mode: 'no-cors' // uncomment if your Apps Script doesn't set CORS; response will be opaque
+          mode: 'no-cors' // ensure request goes out even if CORS headers are missing
         }).catch(() => {});
       } catch {
         // ignore network errors
@@ -407,6 +425,12 @@ const AdminPanel: React.FC = () => {
                     設定を保存
                   </button>
                 </div>
+                {settingsSaved === 'saved' && (
+                  <div className="text-green-600 text-sm">保存しました</div>
+                )}
+                {settingsSaved === 'error' && (
+                  <div className="text-red-600 text-sm">保存に失敗しました。ブラウザ設定をご確認ください。</div>
+                )}
                 <p className="text-xs text-gray-400">
                   追加時に A:番号 / B:日時 / C:性別 / D:年代 / E:コメント の順で追記します。
                 </p>
